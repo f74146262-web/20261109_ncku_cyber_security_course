@@ -1,0 +1,59 @@
+name: moodle-php-lab
+
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_DATABASE: moodle
+      MARIADB_USER: moodle
+      MARIADB_PASSWORD: ${DB_PASSWORD:-LocalLabDatabaseOnly}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-LocalLabRootOnly}
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  moodle:
+    platform: linux/amd64
+    image: moodle-php-lab-moodle:8.3.35
+    build:
+      context: .
+      args:
+        PHP_IMAGE: php:8.3.35-apache-bookworm
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Optional override. Empty means local http://127.0.0.1:${MOODLE_PORT},
+      # unless Codespaces supplies CODESPACE_NAME and the forwarding domain;
+      # the entrypoint then derives the HTTPS forwarded URL automatically.
+      MOODLE_WWWROOT: ${MOODLE_WWWROOT:-}
+      MOODLE_PORT: ${MOODLE_PORT:-8080}
+      CODESPACE_NAME: ${CODESPACE_NAME:-}
+      GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN: ${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-}
+      MOODLE_ADMIN_PASSWORD: ${MOODLE_ADMIN_PASSWORD:-ClassroomOnly-ChangeMe-2026}
+      DB_PASSWORD: ${DB_PASSWORD:-LocalLabDatabaseOnly}
+    ports:
+      - "127.0.0.1:${MOODLE_PORT:-8080}:80"
+    volumes:
+      - moodledata:/var/www/moodledata
+      - configdata:/var/www/config
+      - flagdata:/opt/lab
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1/login/index.php"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 180s
+    restart: unless-stopped
+
+volumes:
+  dbdata:
+  moodledata:
+  configdata:
+  flagdata:
+

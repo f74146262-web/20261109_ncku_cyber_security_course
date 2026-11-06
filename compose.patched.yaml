@@ -1,0 +1,7 @@
+services:
+  moodle:
+    image: moodle-php-lab-moodle:8.3.36
+    build:
+      args:
+        PHP_IMAGE: php:8.3.36-apache-bookworm
+

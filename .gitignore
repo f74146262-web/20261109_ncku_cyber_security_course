@@ -1,0 +1,26 @@
+# Local runtime and generated data
+.env
+loot/*
+!loot/.gitkeep
+__pycache__/
+*.pyc
+
+# Exploit output
+php2shell/out/*
+!php2shell/out/.gitkeep
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Local published slide copy (the orphan slide branch carries the deployable files)
+/slide/
+# Local lab runtime configs; generated from *.template on first container start
+labs/vuln/php.ini
+labs/vuln/apache.conf

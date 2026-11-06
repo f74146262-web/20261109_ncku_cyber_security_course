@@ -1,0 +1,43 @@
+# PHP2Shell lab: full Moodle, PHP 8.3.35, direct /index.php target.
+#
+#   docker compose -f compose.yaml -f compose.vuln.yaml up -d
+#   curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/index.php
+#   curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/login/index.php
+#
+# /index.php keeps the public PoC's 8M / 1000 / display_errors=On request
+# startup.  Its config.php raises memory_limit to 256M before Moodle loads, so
+# the front page renders and the request reaches shutdown where stage 3 runs.
+# Apache gives every other PHP page a 256M / 5000 / display_errors=Off budget.
+# This is a reproduction under the PoC's documented conditions, not a claim
+# that a default production Moodle (150 workers) is remotely exploitable.
+
+name: moodle-php-lab
+
+services:
+  moodle:
+    platform: linux/amd64
+    security_opt:
+      - seccomp=unconfined
+    healthcheck:
+      disable: true
+    volumes:
+      - moodledata:/var/www/moodledata
+      - configdata:/var/www/config
+      - flagdata:/opt/lab
+      # The entrypoint copies the generated local configs to the paths PHP
+      # and Apache read. The *.template files are tracked; the generated
+      # php.ini/apache.conf are ignored so students cannot commit their edits.
+      - ./labs/vuln:/opt/lab-vuln
+      - ./loot:/loot
+    command:
+      - /bin/sh
+      - -c
+      - |
+        # Docker Desktop bind mounts are root-owned; the web worker must be
+        # able to write its proof here.  Local disposable lab only.
+        chmod 0777 /loot 2>/dev/null || true
+        # Lab convenience: the public PoC's cookie parser only accepts 0x7f...
+        # heap pointers, while some hosts (e.g. Codespaces) place mmap at 0x7d...
+        # Pinning the address space keeps the class reproducible on every
+        # supported platform.  The exploit still performs its two leaks.
+        exec setarch x86_64 -R apache2-foreground

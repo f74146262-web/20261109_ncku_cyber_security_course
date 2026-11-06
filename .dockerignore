@@ -1,0 +1,14 @@
+.git
+.env
+loot
+docs
+labs
+scripts
+php2shell
+README.md
+LICENSE
+THIRD_PARTY_NOTICES.md
+**/__pycache__
+*.pyc
+*.pyo
+.DS_Store

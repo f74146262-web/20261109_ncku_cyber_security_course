@@ -1,0 +1,23 @@
+; Student-editable PHP configuration for the Moodle container.
+;
+; This file starts with normal Moodle settings. The Lab asks you to change
+; only the values listed in the Lab Guide. Do not copy a finished answer over
+; this file; make the edits yourself so you can explain why each one matters.
+;
+; Normal baseline values:
+display_errors = Off
+display_startup_errors = Off
+error_reporting = E_ALL
+
+memory_limit = 256M
+max_input_vars = 5000
+post_max_size = 64M
+upload_max_filesize = 64M
+
+session.save_path = "/tmp"
+session.use_strict_mode = 0
+session.use_cookies = 1
+session.upload_progress.enabled = On
+session.upload_progress.cleanup = On
+
+opcache.enable = 1
