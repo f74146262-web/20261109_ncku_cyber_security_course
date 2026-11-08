@@ -61,12 +61,6 @@ Work through the Labs in order. Do not start with the Moodle container.
 2. **Lab 1: Start and Configure Moodle.** Follow [`labs/student/lab-guide.md`](labs/student/lab-guide.md). Start Moodle with the starter settings, then edit `labs/vuln/php.ini` and `labs/vuln/apache.conf`. These two files are generated from `*.template` and are Git-ignored; your edits will not appear in `git status`.
 3. **Labs 2–8.** Continue in [`labs/student/lab-guide.md`](labs/student/lab-guide.md): Lab 2 Read the PoC; Lab 3 Verify Remote Code Execution; Lab 4 Capture The Flag (CTF); Lab 5 Front-page Name; Lab 6 Fictional Grade; Lab 7 Good-hacker Image; and Lab 8 Patched PHP Comparison.
 
-At the start of Lab 1, `env-check.sh` is expected to **FAIL** because `labs/vuln` still contains normal Moodle settings. Read the `[FAIL]` output, make the edits, recreate Moodle, and run it again; it should then report `Result: PASS for container ...`.
-
-The full command sequence, expected output, resets, and troubleshooting are in the Lab documents. README is the entry point, not a second full Lab Guide.
-
-`labs/vuln/php.ini` and `labs/vuln/apache.conf` are local runtime files generated from `*.template` on first start. Edit them, but do not commit them; the templates are the tracked baseline.
-
 ## Login information
 
 - Administrator: user `admin`, password is `MOODLE_ADMIN_PASSWORD` in `.env`. The default is `ClassroomOnly-ChangeMe-2026`, for local practice only.
@@ -82,14 +76,22 @@ Do not use these default passwords on any real system.
 3. [`labs/examples/README.md`](labs/examples/README.md): the front-page name, fictional grade, good-hacker image, and reset scripts.
 4. [`labs/student/writeup-template.md`](labs/student/writeup-template.md): writeup format, grading, and the fourth effect.
 
-The instructor demo controller is `scripts/instructor-demo.sh`; it is not part of the student exercises. Run `setup` once after starting Moodle; it defaults to `https://s.xn--kst.tw/A`, which can be overridden with `DEMO_PAYLOAD_URL`. `DEMO_PAYLOAD_SHA256` is optional; if omitted, the controller hashes the local `labs/examples/moodle-payload.php` with Python. Setup confirms the downloaded payload by running its self-check through the PoC, matching the executing file's SHA-256 over HTTP, then removing the temporary proof. The controller does not access `loot/`; it reads the local Docker image only to derive PHP symbol offsets. The payload contains the good-hacker image URL.
+## Utility scripts
 
-You can switch versions and clean up with:
+**Instructor demo:** `scripts/instructor-demo.sh` is for demonstrations only, not student exercises. After starting Moodle, run:
 
 ```sh
-sh scripts/switch-php.sh 8.3.35   # return to the vulnerable version
-sh scripts/switch-php.sh 8.3.36   # switch to the patched version and clear old proof
-sh scripts/cleanup-artifacts.sh   # remove web-root and loot artifacts
+sh scripts/instructor-demo.sh setup
+```
+
+This downloads and verifies the demo payload. The default URL is `https://s.xn--kst.tw/A`; use `DEMO_PAYLOAD_URL` to override it. Run the script with `--help` for available actions and options.
+
+**Version switching and cleanup:**
+
+```sh
+sh scripts/switch-php.sh 8.3.35  # Vulnerable PHP
+sh scripts/switch-php.sh 8.3.36  # Patched PHP
+sh scripts/cleanup-artifacts.sh  # Remove Lab artifacts
 ```
 
 ## Scope of this Lab
@@ -117,10 +119,10 @@ A default production Moodle with 150 workers did not reproduce reliably in our t
 
 ## Platform notes
 
-- **Windows**: recommend to use WSL2 Ubuntu and Docker Desktop with WSL Integration.
-- **macOS Apple Silicon**: the Lab uses `linux/amd64`. Enable Docker Desktop's Rosetta option or use OrbStack's amd64 emulation. Builds and starts are slower than native.
-- **Linux**: make sure your user can run `docker`, or join the `docker` group and log in again. If `lsof` is missing, check the port with `ss -ltnp`.
-- **GitHub Codespaces**: run `sh scripts/codespace-up.sh`. It auto-detects the forwarded HTTPS URL, updates `.env` and Moodle, and waits for `Moodle is up`. Keep the port Private unless you intentionally make it public; do not edit hosts.
+- **Windows (x86-64 only):** Use WSL2 (Ubuntu) with Docker Desktop's WSL integration enabled. Do not use Windows on ARM.
+- **macOS (Apple Silicon):** Use Docker Desktop with Rosetta enabled, or OrbStack, to run `linux/amd64` containers.
+- **Linux:** Install Docker Engine and Docker Compose.
+- **GitHub Codespaces:** Run `sh scripts/codespace-up.sh` to configure and start Moodle. Keep the forwarded port **Private**.
 
 ## Troubleshooting
 
@@ -142,14 +144,11 @@ Common cases:
 | Browser redirects to `http://127.0.0.1:8080` in Codespaces | Run `sh scripts/codespace-up.sh`; it sets `MOODLE_WWWROOT` to the current forwarded HTTPS URL and recreates Moodle |
 | `Must use https address in wwwroot when ssl proxy enabled` | The Moodle config is stale or mixed. Run `sh scripts/codespace-up.sh`; do not edit the hosts file |
 | `/index.php` returns 302 or 500 within 8 minutes | Moodle may still be installing; wait for `wait-moodle.sh` |
-| Still 302 to `install.php` after 8 minutes | Check `/var/www/html` permissions and the Moodle logs; restart the container |
 | Database connection failed | Check `dbhost`/`dbsocket` in `/var/www/config/config.php` and the Moodle logs. Try `down` then `up` before deleting volumes |
 | `require_once(.../lib/setup.php)` | Old container config; rebuild the image and recreate the container |
-| `env-check.sh` reports `256M` / `5000` / 150 workers | Edit `labs/vuln/php.ini` and `labs/vuln/apache.conf`, then recreate the Moodle container |
 | Repeated `heap leak missed` | Check PHP 8.3.35, the edited ini values, one worker, and `x86_64` |
 | `CONTAINER` is empty | Start Moodle and use the full `-f compose.yaml -f compose.vuln.yaml` arguments |
 | Stage 3 says `no proof yet` | Check `--proof-file`, the working directory, and whether the command writes a file |
-| `EXPLOIT_FAILED` but an old `loot/p1` exists | Remove `loot/p1` and rerun from the project root |
 | The patched version still succeeds | Confirm the running image and PHP version with `sh scripts/switch-php.sh 8.3.36` and `sh scripts/env-check.sh 8.3.36` |
 
 ### Browser redirects to 127.0.0.1
