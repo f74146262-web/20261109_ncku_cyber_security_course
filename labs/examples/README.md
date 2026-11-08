@@ -81,7 +81,7 @@ Check:
 curl -s http://127.0.0.1:8080/grade-demo.txt
 ```
 
-The output contains `grade-state=complete grade=100.00 ... db=verified`, `courseid`, and `userid`. `grade.php` writes progress to `loot/grade-progress.txt`; only when the database read-back matches does it write the completion proof to `loot/p1` and `grade-demo.txt`.
+The output contains `grade-state=complete grade=100.00 course-total=100.00 ... db=verified`, `courseid`, and `userid`. `grade.php` writes progress to `loot/grade-progress.txt`; only when both the grade and course-total database read-backs match does it write the completion proof to `loot/p1` and `grade-demo.txt`.
 
 To see the Gradebook in Moodle, log in as admin at `/login/index.php`, then open `/grade/report/grader/index.php?id=<courseid>`. The test student is `p2s_student`, password `StudentOnly-2026`.
 
@@ -114,8 +114,9 @@ Reset `reset-good-hacker.php` restores the saved top-of-page HTML. It does not c
 - `1` homepage and `2` reset-homepage
 - `g<base36>` to set an integer grade, such as `g2s` for 100
 - `5` good-hacker and `6` reset-good-hacker
+- `7` self-check; it writes `payload-check=ok` with the executing file's SHA-256 without changing Moodle data
 
-It is not a web endpoint and is not part of the student Flag challenge. The controller and the short-URL delivery requirements are instructor-side; students use the smaller examples above. Run `sh scripts/instructor-demo.sh setup` once after Moodle starts. The controller uses `scripts/short_command_planner.py` to split this one payload download into <=14-byte PoC steps; later effect commands stay short. It reads `/demo-proof.txt` from the target over HTTP and never accesses `loot/` or the Docker container. Its SHA-256 check uses Python, so it works on macOS and Linux. If `DEMO_PAYLOAD_SHA256` is omitted, it hashes the local payload file.
+It is not a web endpoint and is not part of the student Flag challenge. The controller and the short-URL delivery requirements are instructor-side; students use the smaller examples above. Run `sh scripts/instructor-demo.sh setup` once after Moodle starts. The controller uses `scripts/short_command_planner.py` to split this one payload download into <=14-byte PoC steps, then runs code `7`, verifies its HTTP proof and the executing file's SHA-256, and removes that proof. Later effect commands stay short. The controller never accesses `loot/`; it reads the local Docker image only to derive PHP symbol offsets. Its SHA-256 check uses Python, so it works on macOS and Linux. If `DEMO_PAYLOAD_SHA256` is omitted, it hashes the local payload file.
 
 ## Data you must not touch
 

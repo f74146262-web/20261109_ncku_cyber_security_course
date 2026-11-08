@@ -9,6 +9,7 @@
 //   1: homepage; 2: reset-homepage
 //   g<base36>: set an integer grade (for example g2s is 100)
 //   5: good-hacker; 6: reset-good-hacker
+//   7: self-check the payload without changing Moodle data
 //
 // This file is a demo payload, not a web endpoint. It reads the local Moodle
 // config and only touches the fictional course, grade, and front-page values.
@@ -78,6 +79,10 @@ try {
             $proof("homepage-reset=ok fullname={$fullname} shortname={$shortname} db=verified");
             break;
 
+        case '7':
+            $proof('payload-check=ok sha256=' . hash_file('sha256', __FILE__));
+            break;
+
         default:
             if (!preg_match('/^g([0-9a-z]{1,2})$/', $action, $match)) {
                 $fail('unknown action code');
@@ -85,11 +90,14 @@ try {
             $value = (float) base_convert($match[1], 36, 10);
             $course = $DB->get_record('course', ['shortname' => 'OS'], '*', MUST_EXIST);
             $user = $DB->get_record('user', ['username' => 'p2s_student', 'deleted' => 0], '*', MUST_EXIST);
-            $item = $DB->get_record('grade_items', [
+            $item = grade_item::fetch([
                 'courseid' => $course->id,
                 'itemtype' => 'manual',
                 'itemname' => 'Midterm',
-            ], '*', MUST_EXIST);
+            ]);
+            if (!$item) {
+                $fail('Midterm grade item not found');
+            }
             $grade = $DB->get_record('grade_grades', ['itemid' => $item->id, 'userid' => $user->id]);
             if (!$grade) {
                 $grade = new grade_grade();
@@ -104,14 +112,19 @@ try {
                 $grade->timemodified = time();
                 $DB->update_record('grade_grades', $grade);
             }
+            $item->force_regrading();
             grade_regrade_final_grades($course->id);
             $check = $DB->get_record('grade_grades', ['itemid' => $item->id, 'userid' => $user->id], '*', MUST_EXIST);
-            if (abs((float) $check->finalgrade - $value) > 0.001) {
-                $fail('grade readback mismatch');
+            $courseitem = grade_item::fetch_course_item($course->id);
+            $coursetotal = $DB->get_record('grade_grades', ['itemid' => $courseitem->id, 'userid' => $user->id], '*', MUST_EXIST);
+            if (abs((float) $check->finalgrade - $value) > 0.001
+                || abs((float) $coursetotal->finalgrade - $value) > 0.001) {
+                $fail('grade or course-total readback mismatch');
             }
             $proof(sprintf(
-                'grade=ok course=OS item=Midterm student=p2s_student grade=%.2f db=verified',
-                $value
+                'grade=ok course=OS item=Midterm student=p2s_student grade=%.2f course-total=%.2f db=verified',
+                $value,
+                (float) $coursetotal->finalgrade
             ));
             break;
 

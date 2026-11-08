@@ -42,11 +42,14 @@ $stage('started', ['score' => $gradevalue]);
 try {
     $course = $DB->get_record('course', ['shortname' => $shortname], '*', MUST_EXIST);
     $user = $DB->get_record('user', ['username' => $username, 'deleted' => 0], '*', MUST_EXIST);
-    $item = $DB->get_record('grade_items', [
+    $item = grade_item::fetch([
         'courseid' => $course->id,
         'itemtype' => 'manual',
         'itemname' => $itemname,
-    ], '*', MUST_EXIST);
+    ]);
+    if (!$item) {
+        throw new RuntimeException('Midterm grade item not found');
+    }
     $grade = $DB->get_record('grade_grades', ['itemid' => $item->id, 'userid' => $user->id]);
     if (!$grade) {
         $grade = new grade_grade();
@@ -61,6 +64,7 @@ try {
         $grade->timemodified = time();
         $DB->update_record('grade_grades', $grade);
     }
+    $item->force_regrading();
     grade_regrade_final_grades($course->id);
     $stage('grade-written', ['itemid' => $item->id]);
 
@@ -68,23 +72,29 @@ try {
     $dbuser = $DB->get_record('user', ['id' => $user->id, 'deleted' => 0], '*', MUST_EXIST);
     $dbitem = $DB->get_record('grade_items', ['id' => $item->id], '*', MUST_EXIST);
     $dbgrade = $DB->get_record('grade_grades', ['itemid' => $item->id, 'userid' => $user->id], '*', MUST_EXIST);
+    $courseitem = grade_item::fetch_course_item($course->id);
+    $coursetotal = $DB->get_record('grade_grades', ['itemid' => $courseitem->id, 'userid' => $user->id], '*', MUST_EXIST);
     $actual = (float) $dbgrade->finalgrade;
+    $actualtotal = (float) $coursetotal->finalgrade;
     $ok = $dbcourse->shortname === $shortname
         && $dbuser->username === $username
         && $dbitem->itemname === $itemname
         && (float) $dbitem->grademax === 100.0
-        && abs($actual - $gradevalue) < 0.001;
+        && abs($actual - $gradevalue) < 0.001
+        && abs($actualtotal - $gradevalue) < 0.001;
 
     if (!$ok) {
         throw new RuntimeException(sprintf(
-            'expected %.2f, read back %.2f', $gradevalue, $actual
+            'expected grade and course total %.2f, read back %.2f and %.2f',
+            $gradevalue, $actual, $actualtotal
         ));
     }
 
     $proof = sprintf(
-        "grade-state=complete grade=%.2f finalgrade=%.2f student=%s course=%s courseid=%d userid=%d itemid=%d db=verified\n",
+        "grade-state=complete grade=%.2f finalgrade=%.2f course-total=%.2f student=%s course=%s courseid=%d userid=%d itemid=%d db=verified\n",
         $gradevalue,
         $actual,
+        $actualtotal,
         $username,
         $shortname,
         $course->id,

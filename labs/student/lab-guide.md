@@ -503,7 +503,7 @@ run_effect grade 100
 Expected:
 
 ```text
-grade-state=complete grade=100.00 finalgrade=100.00 student=p2s_student course=OS courseid=... userid=... itemid=... db=verified
+grade-state=complete grade=100.00 finalgrade=100.00 course-total=100.00 student=p2s_student course=OS courseid=... userid=... itemid=... db=verified
 ```
 
 The script writes the final proof only after verifying the database value. If it fails, inspect:
@@ -538,7 +538,7 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 Expected:
 
 ```text
-grade-reset=ok course=OS item=Midterm grade=30.00 seed_user=p2s_student grade_demo=absent db=verified
+grade-reset=ok course=OS item=Midterm grade=30.00 course-total=30.00 seed_user=p2s_student grade_demo=absent db=verified
 404
 ```
 

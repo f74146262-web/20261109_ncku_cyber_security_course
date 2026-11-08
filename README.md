@@ -82,7 +82,7 @@ Do not use these default passwords on any real system.
 3. [`labs/examples/README.md`](labs/examples/README.md): the front-page name, fictional grade, good-hacker image, and reset scripts.
 4. [`labs/student/writeup-template.md`](labs/student/writeup-template.md): writeup format, grading, and the fourth effect.
 
-The instructor demo controller is `scripts/instructor-demo.sh`; it is not part of the student exercises. Run `setup` once after starting Moodle; it defaults to `https://s.xn--kst.tw/A`, which can be overridden with `DEMO_PAYLOAD_URL`. `DEMO_PAYLOAD_SHA256` is optional; if omitted, the controller hashes the local `labs/examples/moodle-payload.php` with Python. The controller only uses HTTP and the PoC: it does not access `loot/` or inspect the Docker container. The payload contains the good-hacker image URL.
+The instructor demo controller is `scripts/instructor-demo.sh`; it is not part of the student exercises. Run `setup` once after starting Moodle; it defaults to `https://s.xn--kst.tw/A`, which can be overridden with `DEMO_PAYLOAD_URL`. `DEMO_PAYLOAD_SHA256` is optional; if omitted, the controller hashes the local `labs/examples/moodle-payload.php` with Python. Setup confirms the downloaded payload by running its self-check through the PoC, matching the executing file's SHA-256 over HTTP, then removing the temporary proof. The controller does not access `loot/`; it reads the local Docker image only to derive PHP symbol offsets. The payload contains the good-hacker image URL.
 
 You can switch versions and clean up with:
 
