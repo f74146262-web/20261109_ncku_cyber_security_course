@@ -162,7 +162,7 @@ for f in compose.yaml compose.vuln.yaml compose.patched.yaml Dockerfile entrypoi
          labs/vuln/php.ini labs/vuln/apache.conf \
          labs/examples/homepage.php labs/examples/reset-homepage.php \
          labs/examples/grade.php labs/examples/reset-grade.php \
-         labs/examples/rickroll.php labs/examples/reset-rickroll.php \
+         labs/examples/good-hacker.php labs/examples/reset-good-hacker.php \
          php2shell/exploit.py php2shell/docker/offsets.py php2shell/VENDORED.md \
          php2shell/docker/docker-compose.yml php2shell/docker/php.ini \
          php2shell/docker/apache.conf php2shell/docker/www/index.php; do

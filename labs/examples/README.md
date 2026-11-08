@@ -6,7 +6,7 @@ These files are starting points for the in-class demonstrations and the after-cl
 |---|---|---|---|
 | Front-page name | `homepage.php` | `reset-homepage.php` | `fullname` / `shortname` of `mdl_course` id=1 |
 | Fictional grade | `grade.php` | `reset-grade.php` | Changes the existing `作業系統 / Midterm` grade from 30.00 to 100.00 |
-| Rickroll | `rickroll.php` | `reset-rickroll.php` | front-page image link and `good-hacker.webp` |
+| Good-hacker image | `good-hacker.php` | `reset-good-hacker.php` | front-page image link and `good-hacker.webp` |
 
 ## Data lifecycle
 
@@ -16,7 +16,7 @@ These files are starting points for the in-class demonstrations and the after-cl
 | `作業系統` course | Baseline | First initialization | Kept |
 | `Midterm` grade | Baseline/test value | First initialization (30.00); `grade.php` sets 100.00 | `reset-grade.php` writes 30.00 |
 | `impact.txt`, `PWNED` site name | Test data | Running `homepage.php` | Restored and deleted |
-| External `good-hacker.webp` link | Test data | Running `rickroll.php` | Restored |
+| External `good-hacker.webp` link | Test data | Running `good-hacker.php` | Restored |
 
 Do not rename the baseline `OS` course or `Midterm` item, or you may confuse the reset scope of the examples.
 
@@ -87,13 +87,13 @@ To see the Gradebook in Moodle, log in as admin at `/login/index.php`, then open
 
 Reset writes the grade back to 30.00 and deletes `grade-demo.txt`. The course, grade item, and `p2s_student` are kept, and reset can be run more than once.
 
-### Rickroll image
+### Good-hacker image
 
-`rickroll.php` appends a linked image to `additionalhtmltopofbody`. The image is loaded from `https://s.xn--kst.tw/good-hacker.webp`, so the target does not need a local copy. Clicking the image opens the Rickroll video in a new tab. There is no separate `/rickroll.html` page and no site-wide redirect.
+`good-hacker.php` appends a linked image to `additionalhtmltopofbody`. The image is loaded from `https://s.xn--kst.tw/good-hacker.webp`, so the target does not need a local copy. Clicking the image opens its linked video in a new tab. There is no separate image page and no site-wide redirect.
 
 ```sh
-cp labs/examples/rickroll.php loot/rickroll.php
-printf 'php /loot/rickroll.php\n' > loot/c
+cp labs/examples/good-hacker.php loot/good-hacker.php
+printf 'php /loot/good-hacker.php\n' > loot/c
 ```
 
 Check:
@@ -104,20 +104,18 @@ curl -s http://127.0.0.1:8080/ | grep -o 's.xn--kst.tw/good-hacker.webp\|youtube
 
 Open `http://127.0.0.1:8080/` to see the image. The image and video are external, so the browser needs network access; the Moodle page HTML is still present.
 
-Reset `reset-rickroll.php` restores the saved top-of-page HTML. It does not change the site name or grade. Reset can be repeated; when there is nothing to restore, it returns `top=already-baseline`. If you ran the front-page effect earlier, also run `reset-homepage.php`.
+Reset `reset-good-hacker.php` restores the saved top-of-page HTML. It does not change the site name or grade. Reset can be repeated; when there is nothing to restore, it returns `top=already-baseline`. If you ran the front-page effect earlier, also run `reset-homepage.php`.
 
 ## Instructor payload
 
-`moodle-payload.php` is the single payload used by the instructor controller. The controller defaults to `https://s.xn--kst.tw/A` for the payload and `https://s.xn--kst.tw/good-hacker.webp` for the Rickroll image; both can be overridden with `DEMO_PAYLOAD_URL` and `DEMO_IMAGE_URL`. The payload reads the requested action from `/loot/action` and supports:
+`moodle-payload.php` is the single payload used by the instructor controller. The controller defaults to `https://s.xn--kst.tw/A` for the payload; override it with `DEMO_PAYLOAD_URL`. The payload contains the good-hacker image URL. The controller passes a compact code through the PoC and supports:
 
-- `homepage`
-- `reset-homepage`
-- `grade 30`
-- `grade 100`
-- `rickroll`
-- `reset-rickroll`
+- `0` to clear the previous HTTP proof
+- `1` homepage and `2` reset-homepage
+- `g<base36>` to set an integer grade, such as `g2s` for 100
+- `5` good-hacker and `6` reset-good-hacker
 
-It is not a web endpoint and is not part of the student Flag challenge. The controller and the short-URL delivery requirements are instructor-side; students use the smaller examples above. The controller is `scripts/instructor-demo.sh`; it uses `scripts/short_command_planner.py` to split the payload download into <=14-byte PoC steps, so a normal HTTPS URL works. Its SHA-256 check uses Python, so it works on macOS and Linux. If `DEMO_PAYLOAD_SHA256` is omitted, it hashes the local payload file.
+It is not a web endpoint and is not part of the student Flag challenge. The controller and the short-URL delivery requirements are instructor-side; students use the smaller examples above. Run `sh scripts/instructor-demo.sh setup` once after Moodle starts. The controller uses `scripts/short_command_planner.py` to split this one payload download into <=14-byte PoC steps; later effect commands stay short. It reads `/demo-proof.txt` from the target over HTTP and never accesses `loot/` or the Docker container. Its SHA-256 check uses Python, so it works on macOS and Linux. If `DEMO_PAYLOAD_SHA256` is omitted, it hashes the local payload file.
 
 ## Data you must not touch
 

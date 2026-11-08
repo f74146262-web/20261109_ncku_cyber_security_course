@@ -2,7 +2,7 @@
 // Reset the homepage-name example.
 //
 // Restores the baseline site name and removes the web-root impact file.
-// The Rickroll example uses a separate page HTML field, so resetting one
+// The good-hacker example uses a separate page HTML field, so resetting one
 // effect does not cancel the other.
 //
 //   cp labs/examples/reset-homepage.php loot/reset-homepage.php

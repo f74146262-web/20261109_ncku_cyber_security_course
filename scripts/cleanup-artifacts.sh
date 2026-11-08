@@ -69,7 +69,7 @@ echo is_string($v) ? $v : "";
 ' 2>/dev/null || true)
 case "$TOP" in
     *good-hacker.webp*)
-        printf '  [WARN] The Rickroll image is still configured; run reset-rickroll.php first.\n'
+        printf '  [WARN] The good-hacker image is still configured; run reset-good-hacker.php first.\n'
         ;;
 esac
 

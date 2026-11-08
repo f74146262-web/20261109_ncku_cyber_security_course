@@ -12,7 +12,7 @@ You do not need to understand PHP memory corruption first, and you do not need t
 
 - **Before class**: install Docker, build both PHP versions, and pass the environment check.
 - **In class**: start Moodle, run the PoC, and get the Flag.
-- **Effects**: change and reset a fictional front-page name, a grade, and a Rickroll.
+- **Effects**: change and reset a fictional front-page name, a grade, and a good-hacker image.
 - **After class**: design a fourth test effect and finish the writeup.
 
 ## Read this first
@@ -79,10 +79,10 @@ Do not use these default passwords on any real system.
 
 1. [`labs/student/lab-0-minimal-target.md`](labs/student/lab-0-minimal-target.md): run the upstream PHP 8.4.26 minimal target and prove the PoC works before Moodle.
 2. [`labs/student/lab-guide.md`](labs/student/lab-guide.md): from starting Moodle to RCE, the Flag, the three test effects, resets, and the 8.3.36 comparison.
-3. [`labs/examples/README.md`](labs/examples/README.md): the front-page name, fictional grade, Rickroll, and reset scripts.
+3. [`labs/examples/README.md`](labs/examples/README.md): the front-page name, fictional grade, good-hacker image, and reset scripts.
 4. [`labs/student/writeup-template.md`](labs/student/writeup-template.md): writeup format, grading, and the fourth effect.
 
-The instructor demo controller is `scripts/instructor-demo.sh`; it is not part of the student exercises. It defaults to `https://s.xn--kst.tw/A` and `https://s.xn--kst.tw/good-hacker.webp`; override them with `DEMO_PAYLOAD_URL` and `DEMO_IMAGE_URL`. `DEMO_PAYLOAD_SHA256` is optional; if omitted, the controller hashes the local `labs/examples/moodle-payload.php` with Python.
+The instructor demo controller is `scripts/instructor-demo.sh`; it is not part of the student exercises. Run `setup` once after starting Moodle; it defaults to `https://s.xn--kst.tw/A`, which can be overridden with `DEMO_PAYLOAD_URL`. `DEMO_PAYLOAD_SHA256` is optional; if omitted, the controller hashes the local `labs/examples/moodle-payload.php` with Python. The controller only uses HTTP and the PoC: it does not access `loot/` or inspect the Docker container. The payload contains the good-hacker image URL.
 
 You can switch versions and clean up with:
 

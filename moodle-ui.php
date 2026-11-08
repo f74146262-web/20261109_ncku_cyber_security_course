@@ -35,14 +35,14 @@ try {
         set_config('sitenameintitle', 'fullname');
         set_config('additionalhtmltopofbody', '<div style="background:linear-gradient(110deg,#1f4e79 0%,#3f7fa6 58%,#7aa8bd 100%);color:#fff;margin-top:60px;padding:24px 40px;"><div style="font-size:30px;font-weight:700;letter-spacing:0.02em;">成功大學資訊安全學習平臺</div><div style="font-size:16px;margin-top:6px;opacity:0.92;">這不是真的成大的 Moodle</div></div>');
         set_config('brandcolor', '#1f4e79', 'theme_boost');
-        set_config('additionalhtmlfooter', '<div style="text-align:center;color:#5f6b76;font-size:13px;padding:10px 16px;">這不是成大的正式 Moodle；所有資料均為虛構測試資料。</div>');
+        set_config('additionalhtmlfooter', '<div style="text-align:center;color:#5f6b76;font-size:13px;padding:10px 16px;">這不是真的成大 Moodle；所有資料均為虛構測試資料。</div>');
 
         $summary = <<<'HTML'
 <div style="background:linear-gradient(110deg,#1f4e79 0%,#3f7fa6 58%,#7aa8bd 100%);color:#fff;padding:28px 32px;border-radius:4px;margin-bottom:18px;">
   <div style="font-size:30px;font-weight:700;letter-spacing:0.02em;">成功大學資訊安全學習平臺</div>
-  <div style="font-size:16px;margin-top:8px;opacity:0.92;">這不是成大的正式 Moodle</div>
+  <div style="font-size:16px;margin-top:8px;opacity:0.92;">這不是真的成大 Moodle</div>
 </div>
-<p><strong>練習平台說明：</strong>這不是成大的正式 Moodle。課程、帳號與成績均為虛構測試資料。</p>
+<p><strong>練習平台說明：</strong>這不是真的成大 Moodle。課程、帳號與成績均為虛構測試資料。</p>
 HTML;
 
         $site = $DB->get_record('course', ['id' => 1], '*', MUST_EXIST);

