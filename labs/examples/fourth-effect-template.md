@@ -2,7 +2,7 @@
 
 You've successfully hacked your own Moodle Lab. Now it's time to get creative!
 
-Design a fun using the same PoC (it can be harmful or just a prank). Surprise us with something different from the three in-class examples!
+Design a fun effect using the same PoC (it can be harmful or just a prank). Surprise us with something different from the three in-class examples!
 
 Some ideas:
 - Give a fictional course a ridiculous name or description.

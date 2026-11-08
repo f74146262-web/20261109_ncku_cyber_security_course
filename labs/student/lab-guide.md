@@ -36,7 +36,7 @@ These results apply to this controlled configuration, not necessarily a producti
 
 ---
 
-## 0. Before you start
+## Before you start
 
 ### Check the prerequisites
 
@@ -70,9 +70,9 @@ Keep running commands from the project root: paths such as `loot/p1` are relativ
 
 ---
 
-## 1. Lab 1: Start and configure Moodle
+## Lab 1: Start and Configure Moodle
 
-### 1.1 Start Moodle
+### Start Moodle
 
 On a local computer:
 
@@ -112,7 +112,7 @@ Open `http://127.0.0.1:8080/login/index.php`. A temporary `302` or `500` during 
 
 The default administrator password is `ClassroomOnly-ChangeMe-2026`. These accounts are for the local Lab only.
 
-### 1.2 Configure PHP and Apache
+### Configure PHP and Apache
 
 First, run:
 
@@ -181,7 +181,7 @@ Result: PASS for container ... (PHP 8.3.35).
 
 PASS means the checked environment settings are correct. It does not mean RCE has succeeded.
 
-### 1.3 Verify the environment
+### Verify the environment
 
 ```sh
 curl -s -o /dev/null -w '%{http_code}\n' \
@@ -222,7 +222,7 @@ Expected: PHP `8.3.35`, `x86_64`, and a nonempty container ID.
 
 ---
 
-## 2. Lab 2: Read the PoC
+## Lab 2: Read the PoC
 
 Inspect the exploit before using it:
 
@@ -246,7 +246,7 @@ The `-c` argument accepts at most **14 bytes**. Later Labs will use short comman
 
 ---
 
-## 3. Lab 3: Identify the execution user
+## Lab 3: Verify Remote Code Execution
 
 Run `id` to see which account executes the command:
 
@@ -273,9 +273,9 @@ The command executed as the container's web-server user, `www-data`. This is not
 
 ---
 
-## 4. Lab 4: Retrieve the Flag
+## Lab 4: Capture The Flag (CTF)
 
-### 4.1 Understand the 14-byte limit
+### Understand the 14-byte limit
 
 The PoC's `-c` accepts at most **14 UTF-8 bytes**, but:
 
@@ -303,7 +303,7 @@ The commands use:
 
 The Apache worker's working directory is `/var/www/html`.
 
-### 4.2 Build the script
+### Build the script
 
 Define a helper:
 
@@ -362,7 +362,7 @@ cat *>/var/www/html/p
 
 Since `/x` persists between requests, fetching it does not always prove that the latest attempt succeeded. Check that its contents progressed as expected.
 
-### 4.3 Execute and retrieve the Flag
+### Execute and retrieve the Flag
 
 ```sh
 python3 php2shell/exploit.py \
@@ -386,7 +386,7 @@ The HTTP request should return the same Flag.
 
 The script was assembled through multiple RCE commands rather than copied from the Host.
 
-### 4.4 Clean up
+### Clean up
 
 Save your evidence, then remove the temporary files:
 
@@ -401,7 +401,7 @@ Using `docker compose exec` for cleanup is fine, but directly reading the Flag w
 
 ---
 
-## 5. Modify Moodle test data
+## Modify Moodle test data
 
 Now that we have confirmed RCE as `www-data`, we will demonstrate three effects on fictional Moodle data.
 
@@ -409,7 +409,7 @@ For these Labs, prepared PHP scripts are copied into `loot/`, a directory shared
 
 ### Shared helper
 
-Define this function once before Lab 6:
+Define this function once before Lab 5:
 
 ```sh
 run_effect() {
@@ -439,7 +439,7 @@ run_effect() {
 
 Each call copies the selected script, executes it through the PoC, and displays the proof. Define the function again if you open a new terminal.
 
-## 6. Lab 6: Change the front-page name
+## Lab 5: Front-page Name
 
 Change the Moodle site name:
 
@@ -482,7 +482,7 @@ The site name returns to `NCKU Moodle`, and `impact.txt` is removed. This reset 
 
 ---
 
-## 7. Lab 7: Change a fictional grade
+## Lab 6: Fictional Grade
 
 The Lab contains an existing test grade:
 
@@ -546,7 +546,7 @@ The grade returns to `30.00`. The course, grade item, and student remain intact.
 
 ---
 
-## 8. Lab 8: Add a good-hacker image
+## Lab 7: Good-hacker Image
 
 This effect adds a clickable image near the top of Moodle's front page. Clicking it opens a YouTube video in a new tab; it does not redirect the entire site.
 
@@ -593,9 +593,9 @@ The reset restores the previous `additionalhtmltopofbody` content without changi
 
 ---
 
-## 9. Verify the baseline and save evidence
+## Verify the baseline and save evidence
 
-### 9.1 Expected baseline
+### Expected baseline
 
 | Item | Baseline |
 |---|---|
@@ -612,7 +612,7 @@ The reset restores the previous `additionalhtmltopofbody` content without changi
 
 The initializer creates the baseline data, but restarting Moodle does not automatically undo the effects. Use the reset scripts to restore them.
 
-### 9.2 Verify the resets
+### Verify the resets
 
 ```sh
 curl -s http://127.0.0.1:8080/ |
@@ -642,19 +642,18 @@ Expected: `OS`, `Midterm`, `30.00000`.
 
 All three reset scripts can be repeated. If a reset reports `failed`, inspect the output before continuing.
 
-### 9.3 Save your evidence
+### Save your evidence
 
 Your writeup should include:
 
 1. PHP version, ini settings, worker count, and architecture.
-2. Normal request time versus `sleep 5`.
-3. `uid=33(www-data)` proof.
-4. Flag retrieved through HTTP.
-5. Before / after / reset for at least one Moodle effect.
+2. `uid=33(www-data)` proof.
+3. Flag retrieved through HTTP.
+4. Before / after / reset for at least one Moodle effect.
 
 Keep useful failure logs and troubleshooting notes as well.
 
-### 9.4 Clean up
+### Clean up
 
 After saving your evidence and resetting the effects:
 
@@ -666,11 +665,11 @@ This removes the Lab's fixed temporary files, including `/x`, `/p`, `impact.txt`
 
 ---
 
-## 10. Lab 8: Compare vulnerable and patched PHP
+## Lab 8: Patched PHP Comparison
 
 We will now update PHP from 8.3.35 to 8.3.36 and repeat the same PoC test.
 
-### 10.1 Switch PHP versions
+### Switch PHP versions
 
 **Reset all three Moodle effects before patching**, because the vulnerable PoC may no longer execute their reset scripts afterward.
 
@@ -697,7 +696,7 @@ sh scripts/switch-php.sh 8.3.36
 
 Alternatively, trusted reset scripts can run directly inside the container for cleanup. That does not count as RCE evidence.
 
-### 10.2 Verify the version
+### Verify the version
 
 ```sh
 sh scripts/env-check.sh 8.3.36
@@ -710,7 +709,7 @@ Expected: PASS and `PHP 8.3.36`.
 
 Use the new container ID from the switching script for the next test.
 
-### 10.3 Repeat the PoC
+### Repeat the PoC
 
 ```sh
 rm -f loot/p1
@@ -733,7 +732,7 @@ There should be no new `loot/p1`.
 
 If the result differs, first verify the PHP version, running image, and container ID.
 
-### 10.4 Confirm Moodle still works
+### Confirm Moodle still works
 
 ```sh
 curl -s -o /dev/null -w '%{http_code}\n' \
@@ -749,7 +748,7 @@ Under the tested conditions, the patched version no longer produced RCE evidence
 
 ---
 
-## 11. After-class assignment: Fourth Moodle effect (10%)
+## After-class assignment: Fourth Moodle effect (10%)
 
 Use the same PoC to create another effect on **fictional Moodle data**, different from the three in-class examples.
 
@@ -763,7 +762,7 @@ See [`fourth-effect-template.md`](../examples/fourth-effect-template.md).
 
 ---
 
-## 12. Writeup and grading
+## Writeup and grading
 
 Use [`writeup-template.md`](writeup-template.md).
 
@@ -786,7 +785,7 @@ Report what you actually observed. Unsupported success claims receive no credit 
 
 ---
 
-## 13. Troubleshooting
+## Troubleshooting
 
 For installation and platform issues, see [README Troubleshooting](../../README.md#troubleshooting).
 

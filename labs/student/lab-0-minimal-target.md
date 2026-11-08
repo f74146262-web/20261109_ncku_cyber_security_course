@@ -1,4 +1,4 @@
-# Lab 0: Run the Upstream Minimal Target
+# Lab 0: Upstream Minimal Target
 
 ## Purpose
 

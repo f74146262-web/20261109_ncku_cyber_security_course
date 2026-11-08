@@ -57,9 +57,9 @@ If only optional checks need attention, the result is still `all checks passed`,
 
 Work through the Labs in order. Do not start with the Moodle container.
 
-1. **Lab 0: upstream minimal target.** Follow [`labs/student/lab-0-minimal-target.md`](labs/student/lab-0-minimal-target.md). Start the PHP 8.4.26 target on port 8088, run the `official` profile PoC, confirm `uid=33(www-data)`, then stop it.
-2. **Lab 1: Moodle startup and configuration.** Follow [`labs/student/lab-guide.md`](labs/student/lab-guide.md). Start Moodle with the starter settings, then edit `labs/vuln/php.ini` and `labs/vuln/apache.conf`. These two files are generated from `*.template` and are Git-ignored; your edits will not appear in `git status`.
-3. **Labs 2–9.** Continue with the PoC, `uid`, Flag Challenge, the three Moodle effects, and the PHP 8.3.36 comparison.
+1. **Lab 0: Upstream Minimal Target.** Follow [`labs/student/lab-0-minimal-target.md`](labs/student/lab-0-minimal-target.md). Start the PHP 8.4.26 target on port 8088, run the `official` profile PoC, confirm `uid=33(www-data)`, then stop it.
+2. **Lab 1: Start and Configure Moodle.** Follow [`labs/student/lab-guide.md`](labs/student/lab-guide.md). Start Moodle with the starter settings, then edit `labs/vuln/php.ini` and `labs/vuln/apache.conf`. These two files are generated from `*.template` and are Git-ignored; your edits will not appear in `git status`.
+3. **Labs 2–8.** Continue in [`labs/student/lab-guide.md`](labs/student/lab-guide.md): Lab 2 Read the PoC; Lab 3 Verify Remote Code Execution; Lab 4 Capture The Flag (CTF); Lab 5 Front-page Name; Lab 6 Fictional Grade; Lab 7 Good-hacker Image; and Lab 8 Patched PHP Comparison.
 
 At the start of Lab 1, `env-check.sh` is expected to **FAIL** because `labs/vuln` still contains normal Moodle settings. Read the `[FAIL]` output, make the edits, recreate Moodle, and run it again; it should then report `Result: PASS for container ...`.
 
