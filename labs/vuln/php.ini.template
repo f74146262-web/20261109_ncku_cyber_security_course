@@ -5,12 +5,12 @@
 ; this file; make the edits yourself so you can explain why each one matters.
 ;
 ; Normal baseline values:
-display_errors = Off
-display_startup_errors = Off
+display_errors = On
+display_startup_errors = On
 error_reporting = E_ALL
 
-memory_limit = 256M
-max_input_vars = 5000
+memory_limit = 8M
+max_input_vars = 1000
 post_max_size = 64M
 upload_max_filesize = 64M
 
